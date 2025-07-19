@@ -1,0 +1,87 @@
+- tag: reuse_candidate
+  description: >
+    A note that suggests that an idea, tool, or structure could be reused 
+    in other contexts or projects.
+  examples:
+    - "could use the pcc as platform for all projs"
+    - "this script might generalize to other cases"
+    - "reuse my spotify classifier as base for new projects"
+  confidence_threshold: 0.7
+  parent_tag: "development_ideas"
+
+- tag: learning_insight
+  description: >
+    A note that captures a key learning, realization, or insight from 
+    studying, experimenting, or working on something.
+  examples:
+    - "learned that vector embeddings work better than tf-idf for semantic search"
+    - "realized that the bottleneck was in the data preprocessing step"
+    - "insight: most bugs come from edge cases I didn't consider"
+  confidence_threshold: 0.75
+  parent_tag: "knowledge"
+
+- tag: todo_item
+  description: >
+    A note that represents a task, action item, or something that needs 
+    to be done in the future.
+  examples:
+    - "need to fix the authentication bug in the login flow"
+    - "todo: implement caching for the API responses"
+    - "should refactor the database schema to support versioning"
+  confidence_threshold: 0.8
+  parent_tag: "actions"
+
+- tag: research_question
+  description: >
+    A note that poses a question, hypothesis, or area that needs 
+    investigation or research.
+  examples:
+    - "how does attention mechanism work in transformers?"
+    - "what's the best way to handle imbalanced datasets?"
+    - "research: compare different graph neural network architectures"
+  confidence_threshold: 0.7
+  parent_tag: "inquiry"
+
+- tag: code_snippet
+  description: >
+    A note that contains code, algorithms, or technical implementation 
+    details that might be useful later.
+  examples:
+    - "def quick_sort(arr): return sorted(arr) if len(arr) <= 1 else ..."
+    - "docker run -p 8080:8080 my-app:latest"
+    - "SELECT * FROM users WHERE created_at > NOW() - INTERVAL '7 days'"
+  confidence_threshold: 0.85
+  parent_tag: "technical"
+
+- tag: resource_link
+  description: >
+    A note that contains links, references, or pointers to external 
+    resources, papers, or tools.
+  examples:
+    - "https://arxiv.org/abs/1706.03762 - Attention is All You Need"
+    - "check out this tool: https://github.com/streamlit/streamlit"
+    - "paper: BERT: Pre-training of Deep Bidirectional Transformers"
+  confidence_threshold: 0.9
+  parent_tag: "references"
+
+- tag: meeting_note
+  description: >
+    A note that captures discussion points, decisions, or outcomes 
+    from meetings or conversations.
+  examples:
+    - "team decided to use React for the frontend, backend in Python"
+    - "meeting with client: they want the MVP by end of month"
+    - "discussed architecture: microservices vs monolith"
+  confidence_threshold: 0.7
+  parent_tag: "collaboration"
+
+- tag: idea_brainstorm
+  description: >
+    A note that contains creative ideas, brainstorming, or conceptual 
+    thinking about potential projects or solutions.
+  examples:
+    - "idea: build a semantic search engine for personal notes"
+    - "what if we could automatically tag emails by content?"
+    - "brainstorm: ways to improve user onboarding flow"
+  confidence_threshold: 0.65
+  parent_tag: "creativity" 
