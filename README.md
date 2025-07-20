@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: MVP 2.0](https://img.shields.io/badge/Status-MVP%202.0-orange.svg)]()
 
-## 🧭 DESIGN PHILOSOPHY
+## DESIGN PHILOSOPHY
 
 This is not a tagging engine. It's a **semantic prosthesis for symbolic cognition**.
 
@@ -18,7 +18,7 @@ SNR aims to:
 - **Design for modularity** only after core flow is usable end-to-end
 - **Close the loop** with corrections, learning and symbolic drift detection
 
-## 🚀 QUICK START
+## QUICK START
 
 ```bash
 # Clone and setup
@@ -33,7 +33,7 @@ python scripts/run_router.py --input examples/sample_notes.csv --mode faiss
 cat outputs/tagged_notes.json
 ```
 
-## 📐 ARCHITECTURE OVERVIEW
+## ARCHITECTURE OVERVIEW
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -54,7 +54,7 @@ cat outputs/tagged_notes.json
                        └─────────────────┘
 ```
 
-## 🗂️ DATA MODEL
+## DATA MODEL
 
 ### NoteRecord Output
 ```json
@@ -92,7 +92,7 @@ cat outputs/tagged_notes.json
   parent_tag: "development_ideas"
 ```
 
-## 🧰 PROJECT STRUCTURE
+## PROJECT STRUCTURE
 
 ```
 SNR/
@@ -119,7 +119,7 @@ SNR/
 └── Dockerfile
 ```
 
-## 🚀 USAGE
+## USAGE
 
 ### Basic Routing
 ```bash
@@ -155,9 +155,9 @@ python scripts/benchmark_models.py \
   --models all-mpnet-base-v2 all-MiniLM-L6-v2
 ```
 
-## ✅ MVP STATUS
+## MVP STATUS
 
-### Core Capabilities ✅
+### Core Capabilities
 - [x] Embeds notes + semantic tag descriptions
 - [x] KNN tag matching with FAISS
 - [x] Configurable tag ontology in YAML
@@ -166,20 +166,20 @@ python scripts/benchmark_models.py \
 - [x] Basic CLI runner
 - [x] Ready for Obsidian use
 
-### Key Additions in v2.0 ✅
+### Key Additions in v2.0
 - [x] Grounded tags (desc + examples)
 - [x] Note versioning + metadata
 - [x] Disambiguation hook
 - [x] Evaluation hooks (low-sim reporting, confusion)
 
-### Critical Improvements Needed 🚨
+### Critical Improvements Needed
 - [ ] **Evaluation Framework**: Precision/recall metrics, cross-validation
 - [ ] **Model Benchmarking**: Test multiple embedding models
 - [ ] **Confidence Calibration**: Convert similarity scores to calibrated probabilities
 - [ ] **Active Learning**: Uncertainty sampling for manual review
 - [ ] **Production Monitoring**: Logging, health checks, alerting
 
-## 🧪 TESTING & EVALUATION
+## TESTING & EVALUATION
 
 ### Unit Tests
 ```bash
@@ -205,27 +205,27 @@ python scripts/human_evaluation.py \
   --output results/human_agreement.json
 ```
 
-## 🔮 ROADMAP
+## ROADMAP
 
-### Short-Term (2-4 weeks) 🎯
+### Short-Term (2-4 weeks)
 - [ ] **Evaluation Framework**: Implement precision/recall, semantic similarity metrics
 - [ ] **Model Selection**: Benchmark 3-5 embedding models, select optimal
 - [ ] **Confidence Calibration**: Add Platt scaling for calibrated probabilities
 - [ ] **Active Learning**: Uncertainty sampling for manual review
 
-### Mid-Term (1-3 months) 🚀
+### Mid-Term (1-3 months)
 - [ ] **Production Readiness**: Logging, monitoring, health checks
 - [ ] **Advanced Routing**: Ensemble methods, contextual disambiguation
 - [ ] **GUI Dashboard**: Streamlit interface for interactive exploration
 - [ ] **Obsidian Integration**: YAML frontmatter writer
 
-### Long-Term (3-6 months) 🔮
+### Long-Term (3-6 months)
 - [ ] **Self-Improving System**: Few-shot learning, semantic drift detection
 - [ ] **Multi-Modal**: Support for images, audio, structured data
 - [ ] **Temporal Dynamics**: Note evolution tracking, concept drift
 - [ ] **Personalization**: User-specific fine-tuning, pattern learning
 
-## 🧠 DESIGN PRINCIPLES
+## DESIGN PRINCIPLES
 
 | Principle | Implementation |
 |-----------|----------------|
@@ -235,7 +235,7 @@ python scripts/human_evaluation.py \
 | **Modular, not fragmented** | Modules exist only to serve coherent default flow |
 | **Learnable over time** | Manual corrections form foundation for fine-tuning |
 
-## 📊 SUCCESS METRICS
+## SUCCESS METRICS
 
 ### Routing Quality
 - **Precision@k**: Accuracy of top-k tag predictions
@@ -252,7 +252,7 @@ python scripts/human_evaluation.py \
 - **Memory Usage**: RAM consumption for different dataset sizes
 - **Scalability**: Performance with 10k+ notes
 
-## 🚨 CRITICAL LIMITATIONS
+## CRITICAL LIMITATIONS
 
 ### Current Model Choice
 - **all-MiniLM-L6-v2**: 2019 model, 384 dimensions, limited expressiveness
@@ -268,7 +268,7 @@ python scripts/human_evaluation.py \
 - **Batch Processing**: No efficient batch embedding generation
 - **Error Handling**: Missing graceful degradation for edge cases
 
-## 🤝 CONTRIBUTING
+## CONTRIBUTING
 
 ### Development Setup
 ```bash
@@ -291,11 +291,11 @@ pre-commit install
 - Performance benchmarks for routing
 - Human evaluation protocols
 
-## 📄 LICENSE
+## LICENSE
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 AUTHOR
+## AUTHOR
 
 **Alejandro Garay** - ML Engineer & Cognitive Systems Designer
 
