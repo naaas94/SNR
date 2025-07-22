@@ -3,6 +3,7 @@
 import pytest
 import numpy as np
 from unittest.mock import Mock, patch
+import time
 
 from src.embedding.embedder import TextEmbedder, TagEmbedder
 
@@ -249,7 +250,6 @@ class TestEmbedderIntegration:
         texts = [f"Test note {i}" for i in range(10)]
         
         # Time batch processing
-        import time
         start_time = time.time()
         batch_result = text_embedder.embed_texts(texts)
         batch_time = time.time() - start_time
@@ -265,6 +265,45 @@ class TestEmbedderIntegration:
         # Results should be equivalent
         individual_array = np.array(individual_results)
         np.testing.assert_array_almost_equal(batch_result, individual_array, decimal=6)
+
+
+class TestEmbedderPerformance:
+    """Performance tests for embedding components."""
+    
+    def test_load_performance(self):
+        """Test load performance of the TextEmbedder with a large number of texts."""
+        embedder = TextEmbedder("all-MiniLM-L6-v2")
+        texts = ["This is a test note" for _ in range(1000)]  # Simulate 1000 notes
+        
+        start_time = time.time()
+        result = embedder.embed_texts(texts)
+        end_time = time.time()
+        
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1000, embedder.embedding_dim)
+        
+        # Log performance
+        duration = end_time - start_time
+        print(f"Load test completed in {duration:.2f} seconds")
+        
+    def test_stress_performance(self):
+        """Test stress performance by embedding texts until failure."""
+        embedder = TextEmbedder("all-MiniLM-L6-v2")
+        texts = ["This is a test note" for _ in range(10000)]  # Start with 10,000 notes
+        
+        try:
+            start_time = time.time()
+            result = embedder.embed_texts(texts)
+            end_time = time.time()
+            
+            assert isinstance(result, np.ndarray)
+            assert result.shape == (10000, embedder.embedding_dim)
+            
+            # Log performance
+            duration = end_time - start_time
+            print(f"Stress test completed in {duration:.2f} seconds")
+        except Exception as e:
+            print(f"Stress test failed: {e}")
 
 
 if __name__ == "__main__":

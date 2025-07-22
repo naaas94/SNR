@@ -3,7 +3,7 @@
 import logging
 import json
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Callable
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import datetime
@@ -265,3 +265,135 @@ def set_logger(logger: MLLogger) -> None:
     """Set the global logger instance."""
     global _global_logger
     _global_logger = logger 
+
+
+def setup_api_logging(api_name: str, log_file: Optional[str] = None, log_level: str = "INFO") -> MLLogger:
+    """
+    Set up logging for API interfaces.
+    
+    Args:
+        api_name: Name of the API
+        log_file: Path to log file (optional)
+        log_level: Logging level
+        
+    Returns:
+        Configured MLLogger instance
+    """
+    logger = MLLogger(log_file=log_file, log_level=log_level)
+    logger.log_event(
+        event_type="startup",
+        component=api_name,
+        message=f"API {api_name} started",
+        metadata={"log_level": log_level}
+    )
+    return logger
+
+
+def setup_cli_logging(cli_name: str, log_file: Optional[str] = None, log_level: str = "INFO") -> MLLogger:
+    """
+    Set up logging for CLI interfaces.
+    
+    Args:
+        cli_name: Name of the CLI
+        log_file: Path to log file (optional)
+        log_level: Logging level
+        
+    Returns:
+        Configured MLLogger instance
+    """
+    logger = MLLogger(log_file=log_file, log_level=log_level)
+    logger.log_event(
+        event_type="startup",
+        component=cli_name,
+        message=f"CLI {cli_name} started",
+        metadata={"log_level": log_level}
+    )
+    return logger 
+
+
+class CircuitBreaker:
+    """Circuit breaker pattern to manage failures and prevent system overload."""
+    
+    def __init__(self, failure_threshold: int, recovery_timeout: int, logger: Optional[MLLogger] = None):
+        """
+        Initialize circuit breaker.
+        
+        Args:
+            failure_threshold: Number of failures to trigger the circuit breaker
+            recovery_timeout: Time in seconds to wait before attempting recovery
+            logger: ML logger instance
+        """
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.logger = logger or MLLogger()
+        self.failure_count = 0
+        self.state = "CLOSED"
+        self.last_failure_time = None
+    
+    def call(self, func: Callable, *args, **kwargs) -> Any:
+        """
+        Execute a function with circuit breaker protection.
+        
+        Args:
+            func: Function to execute
+            *args: Positional arguments for the function
+            **kwargs: Keyword arguments for the function
+            
+        Returns:
+            Result of the function call
+        """
+        if self.state == "OPEN":
+            if time.time() - self.last_failure_time < self.recovery_timeout:
+                self.logger.log_event(
+                    event_type="circuit_breaker",
+                    component="circuit_breaker",
+                    message="Circuit breaker is open, request blocked",
+                    metadata={"state": self.state}
+                )
+                raise Exception("Circuit breaker is open")
+            else:
+                self.state = "HALF_OPEN"
+                self.logger.log_event(
+                    event_type="circuit_breaker",
+                    component="circuit_breaker",
+                    message="Circuit breaker transitioning to half-open",
+                    metadata={"state": self.state}
+                )
+        
+        try:
+            result = func(*args, **kwargs)
+            self._reset()
+            return result
+        except Exception as e:
+            self._record_failure()
+            self.logger.log_error(
+                component="circuit_breaker",
+                error_message=str(e),
+                error_type="execution_failure"
+            )
+            raise
+    
+    def _record_failure(self) -> None:
+        """Record a failure and update circuit breaker state."""
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        
+        if self.failure_count >= self.failure_threshold:
+            self.state = "OPEN"
+            self.logger.log_event(
+                event_type="circuit_breaker",
+                component="circuit_breaker",
+                message="Circuit breaker opened due to failures",
+                metadata={"state": self.state, "failure_count": self.failure_count}
+            )
+    
+    def _reset(self) -> None:
+        """Reset the circuit breaker after a successful call."""
+        self.failure_count = 0
+        self.state = "CLOSED"
+        self.logger.log_event(
+            event_type="circuit_breaker",
+            component="circuit_breaker",
+            message="Circuit breaker closed after successful call",
+            metadata={"state": self.state}
+        ) 

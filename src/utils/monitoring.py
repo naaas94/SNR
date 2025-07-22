@@ -59,22 +59,28 @@ class ErrorEvent:
 
 
 class PerformanceMonitor:
-    """Monitors system performance metrics."""
+    """Monitors system performance metrics with alerting mechanisms."""
     
     def __init__(self, logger: Optional[MLLogger] = None,
                  metrics_file: Optional[str] = None,
-                 max_history: int = 1000):
+                 max_history: int = 1000,
+                 alert_thresholds: Optional[Dict[str, float]] = None):
         """
-        Initialize performance monitor.
+        Initialize performance monitor with alerting mechanisms.
         
         Args:
             logger: ML logger instance
             metrics_file: File to save metrics (optional)
             max_history: Maximum number of metrics to keep in memory
+            alert_thresholds: Thresholds for triggering alerts
         """
         self.logger = logger or MLLogger()
         self.metrics_file = metrics_file
         self.max_history = max_history
+        self.alert_thresholds = alert_thresholds or {
+            "cpu_percent": 90.0,
+            "error_rate": 0.1
+        }
         
         # Metrics storage
         self.metrics_history: deque = deque(maxlen=max_history)
@@ -136,7 +142,7 @@ class PerformanceMonitor:
                 )
     
     def collect_metrics(self) -> PerformanceMetrics:
-        """Collect current system metrics."""
+        """Collect current system metrics and check for alerts."""
         # System metrics
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
@@ -185,11 +191,30 @@ class PerformanceMonitor:
             }
         )
         
+        # Check for alerts
+        self._check_alerts(metrics)
+        
         # Save to file if specified
         if self.metrics_file:
             self._save_metrics_to_file()
         
         return metrics
+    
+    def _check_alerts(self, metrics: PerformanceMetrics) -> None:
+        """Check metrics against thresholds and log alerts."""
+        alerts = []
+        if metrics.cpu_percent > self.alert_thresholds["cpu_percent"]:
+            alerts.append(f"High CPU usage: {metrics.cpu_percent}%")
+        if metrics.error_rate > self.alert_thresholds["error_rate"]:
+            alerts.append(f"High error rate: {metrics.error_rate}")
+        
+        for alert in alerts:
+            self.logger.log_event(
+                event_type="alert",
+                component="monitor",
+                message=alert,
+                metadata=metrics.to_dict()
+            )
     
     def record_processing_time(self, processing_time_ms: float) -> None:
         """Record processing time for a note."""

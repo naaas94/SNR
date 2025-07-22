@@ -4,34 +4,48 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any, Optional
 import time
+import cachetools
 
 
 class TextEmbedder:
-    """Handles text embedding using sentence-transformers."""
+    """Handles text embedding using sentence-transformers with caching."""
     
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
-        """Initialize with specified model."""
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", cache_size: int = 1000):
+        """Initialize with specified model and cache."""
         self.model_name = model_name
         self.model = SentenceTransformer(model_name)
         self.embedding_dim = self.model.get_sentence_embedding_dimension()
+        self.cache = cachetools.LRUCache(maxsize=cache_size)
         
     def embed_texts(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
-        """Embed a list of texts into vectors."""
+        """Embed a list of texts into vectors with caching."""
         if not texts:
             return np.array([])
-            
-        embeddings = self.model.encode(
-            texts, 
-            batch_size=batch_size,
-            show_progress_bar=False,
-            convert_to_numpy=True
-        )
         
-        return embeddings
+        embeddings = []
+        for text in texts:
+            if text in self.cache:
+                embeddings.append(self.cache[text])
+            else:
+                embedding = self.model.encode(
+                    [text],
+                    batch_size=batch_size,
+                    show_progress_bar=False,
+                    convert_to_numpy=True
+                )[0]
+                self.cache[text] = embedding
+                embeddings.append(embedding)
+        
+        return np.array(embeddings)
     
     def embed_single_text(self, text: str) -> np.ndarray:
-        """Embed a single text into a vector."""
-        return self.embed_texts([text])[0]
+        """Embed a single text into a vector with caching."""
+        if text in self.cache:
+            return self.cache[text]
+        
+        embedding = self.embed_texts([text])[0]
+        self.cache[text] = embedding
+        return embedding
     
     def get_embedding_dimension(self) -> int:
         """Get the dimension of the embeddings."""

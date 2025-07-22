@@ -25,11 +25,11 @@ class ParsedNote:
 
 
 class QuickCaptureParser:
-    """Parser for QuickCapture controlled grammar."""
+    """Parser for QuickCapture controlled grammar with enhanced integration and error handling."""
     
     def __init__(self, logger: Optional[MLLogger] = None):
         """
-        Initialize QuickCapture parser.
+        Initialize QuickCapture parser with enhanced logging and error handling.
         
         Args:
             logger: ML logger instance
@@ -51,9 +51,35 @@ class QuickCaptureParser:
             "allowed_tag_chars": r'^[a-zA-Z_][a-zA-Z0-9_]*$'
         }
     
+    def parse_batch(self, notes: List[str], auto_timestamp: bool = True) -> List[ParsedNote]:
+        """
+        Parse a batch of notes using QuickCapture grammar with enhanced error handling.
+        
+        Args:
+            notes: List of raw note texts
+            auto_timestamp: Whether to add timestamp if missing
+            
+        Returns:
+            List of ParsedNote objects with structured data
+        """
+        parsed_notes = []
+        for raw_text in notes:
+            try:
+                parsed_note = self.parse_note(raw_text, auto_timestamp)
+                parsed_notes.append(parsed_note)
+            except Exception as e:
+                self.logger.log_event(
+                    event_type="error",
+                    component="quickcapture_parser",
+                    message=f"Error parsing note: {e}",
+                    metadata={"raw_text": raw_text}
+                )
+                continue
+        return parsed_notes
+
     def parse_note(self, raw_text: str, auto_timestamp: bool = True) -> ParsedNote:
         """
-        Parse a note using QuickCapture grammar.
+        Parse a note using QuickCapture grammar with enhanced logging.
         
         Grammar format:
         #tag1 #tag2 body text //optional comment @timestamp
@@ -208,36 +234,6 @@ class QuickCaptureParser:
         weighted_issues = len(errors) * 2 + len(warnings)
         score = max(0.0, 1.0 - (weighted_issues / 10.0))
         return round(score, 3)
-    
-    def parse_batch(self, notes: List[str], auto_timestamp: bool = True) -> List[ParsedNote]:
-        """Parse a batch of notes."""
-        parsed_notes = []
-        
-        for i, note_text in enumerate(notes):
-            try:
-                parsed_note = self.parse_note(note_text, auto_timestamp)
-                parsed_notes.append(parsed_note)
-            except Exception as e:
-                self.logger.log_error(
-                    component="quickcapture_parser",
-                    error_message=f"Failed to parse note {i}: {e}",
-                    error_type="parsing_error",
-                    context={"note_index": i, "note_text": note_text[:100]}
-                )
-                # Create invalid note for failed parsing
-                failed_note = ParsedNote(
-                    tags=[],
-                    body=note_text,
-                    comment=None,
-                    timestamp=datetime.now().isoformat(),
-                    raw_text=note_text,
-                    valid=False,
-                    issues=[f"Parsing failed: {str(e)}"],
-                    metadata={"parsing_failed": True}
-                )
-                parsed_notes.append(failed_note)
-        
-        return parsed_notes
     
     def to_dict(self, parsed_note: ParsedNote) -> Dict[str, Any]:
         """Convert ParsedNote to dictionary for JSON serialization."""

@@ -5,6 +5,8 @@ import faiss
 from typing import List, Dict, Any, Tuple, Optional
 from dataclasses import dataclass
 import time
+import threading
+from queue import Queue
 
 from ..config.tag_loader import TagDefinition
 from ..embedding.embedder import TextEmbedder, TagEmbedder
@@ -27,43 +29,51 @@ class RoutingResult:
 
 
 class FAISSRouter:
-    """Routes notes to tags using FAISS for efficient similarity search."""
+    """Routes notes to tags using FAISS for efficient similarity search with comprehensive routing strategy."""
     
-    def __init__(self, embedder: TextEmbedder, tag_embedder: TagEmbedder):
-        """Initialize with embedders."""
+    def __init__(self, embedder: TextEmbedder, tag_embedder: TagEmbedder, max_threads: int = 4):
+        """Initialize with embedders and routing strategy parameters."""
         self.embedder = embedder
         self.tag_embedder = tag_embedder
         self.index: Optional[faiss.IndexFlatIP] = None
         self.tag_definitions: List[TagDefinition] = []
         self.tag_embeddings: List[Any] = []
-        
-    def build_index(self, tags: List[TagDefinition]) -> None:
-        """Build FAISS index from tag definitions."""
-        self.tag_definitions = tags
-        self.tag_embeddings = []
-        
-        # Embed each tag definition
-        for tag in tags:
-            # Create multiple embeddings per tag: description + examples
-            tag_embedding = self.tag_embedder.embed_tag_definition(
-                tag.description, tag.examples
-            )
-            self.tag_embeddings.append(tag_embedding)
-            
-        # Convert to numpy array
-        embeddings_array = np.array(self.tag_embeddings, dtype=np.float32)
-        
-        # Normalize embeddings for cosine similarity
-        faiss.normalize_L2(embeddings_array)
-        
-        # Create FAISS index
-        dimension = embeddings_array.shape[1]
-        self.index = faiss.IndexFlatIP(dimension)  # Inner product for cosine similarity
-        self.index.add(embeddings_array)
-        
+        self.max_threads = max_threads
+        self.routing_queue = Queue()
+        self._start_routing_threads()
+
+    def _start_routing_threads(self):
+        """Start threads for load-based routing."""
+        for _ in range(self.max_threads):
+            thread = threading.Thread(target=self._process_routing_queue)
+            thread.daemon = True
+            thread.start()
+
+    def _process_routing_queue(self):
+        """Process routing tasks from the queue."""
+        while True:
+            note_id, text, timestamp, top_k, confidence_threshold = self.routing_queue.get()
+            try:
+                self.route_note(note_id, text, timestamp, top_k, confidence_threshold)
+            except Exception as e:
+                print(f"Error routing note {note_id}: {e}")
+            finally:
+                self.routing_queue.task_done()
+
+    def schedule_routing(self, notes: List[Tuple[str, str, str]], 
+                         top_k: int = 3, 
+                         confidence_threshold: float = 0.5, 
+                         immediate: bool = False):
+        """Schedule notes for routing, with optional immediate processing."""
+        for note in notes:
+            if immediate:
+                self.route_note(*note, top_k, confidence_threshold)
+            else:
+                self.routing_queue.put((*note, top_k, confidence_threshold))
+
     def route_note(self, note_id: str, text: str, timestamp: str, 
                    top_k: int = 3, confidence_threshold: float = 0.5) -> RoutingResult:
-        """Route a single note to the best matching tag."""
+        """Route a single note to the best matching tag with content-based routing."""
         start_time = time.time()
         
         # Embed the note

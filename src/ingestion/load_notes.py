@@ -28,12 +28,17 @@ class NoteLoader:
     def load_from_csv(self, file_path: str, text_column: str = "text", 
                      id_column: Optional[str] = None, 
                      timestamp_column: Optional[str] = None) -> List[Note]:
-        """Load notes from a CSV file."""
-        df = pd.read_csv(file_path)
+        """Load notes from a CSV file with enhanced validation and error handling."""
+        try:
+            df = pd.read_csv(file_path)
+        except Exception as e:
+            print(f"Error reading CSV file {file_path}: {e}")
+            return []
         
         if text_column not in df.columns:
-            raise ValueError(f"Text column '{text_column}' not found in CSV")
-            
+            print(f"Text column '{text_column}' not found in CSV")
+            return []
+        
         notes = []
         for idx, row in df.iterrows():
             # Generate note ID
@@ -62,9 +67,13 @@ class NoteLoader:
         return notes
     
     def load_from_txt(self, file_path: str, delimiter: str = "\n") -> List[Note]:
-        """Load notes from a text file, splitting by delimiter."""
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        """Load notes from a text file, splitting by delimiter with error handling."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Error reading text file {file_path}: {e}")
+            return []
             
         lines = [line.strip() for line in content.split(delimiter) if line.strip()]
         
@@ -82,9 +91,13 @@ class NoteLoader:
         return notes
     
     def load_from_markdown(self, file_path: str) -> List[Note]:
-        """Load notes from a markdown file, treating each paragraph as a note."""
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        """Load notes from a markdown file, treating each paragraph as a note with error handling."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Error reading markdown file {file_path}: {e}")
+            return []
             
         # Split by double newlines (paragraphs)
         paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]

@@ -48,11 +48,11 @@ class ValidationResult:
 
 
 class DataValidator:
-    """Validates input data for SNR system."""
+    """Validates input data for SNR system with QC error handling architecture."""
     
     def __init__(self, logger: Optional[MLLogger] = None):
         """
-        Initialize data validator.
+        Initialize data validator with enhanced error handling.
         
         Args:
             logger: ML logger instance
@@ -105,7 +105,7 @@ class DataValidator:
     
     def validate_note(self, note_data: Dict[str, Any]) -> ValidationResult:
         """
-        Validate a single note.
+        Validate a single note with enhanced error handling.
         
         Args:
             note_data: Note data dictionary
@@ -119,12 +119,19 @@ class DataValidator:
         # Validate required fields
         for field, rules in self.note_validation_rules.items():
             if rules.get("required", False) and field not in note_data:
-                errors.append(ValidationError(
+                error = ValidationError(
                     field=field,
                     error_type="missing_field",
                     message=f"Required field '{field}' is missing",
                     value=None
-                ))
+                )
+                errors.append(error)
+                self.logger.log_event(
+                    event_type="validation_error",
+                    component="data_validator",
+                    message=error.message,
+                    metadata=error.to_dict()
+                )
                 continue
             
             if field in note_data:
@@ -134,12 +141,44 @@ class DataValidator:
                 )
                 errors.extend(field_errors)
                 warnings.extend(field_warnings)
+                
+                # Log errors and warnings
+                for error in field_errors:
+                    self.logger.log_event(
+                        event_type="validation_error",
+                        component="data_validator",
+                        message=error.message,
+                        metadata=error.to_dict()
+                    )
+                for warning in field_warnings:
+                    self.logger.log_event(
+                        event_type="validation_warning",
+                        component="data_validator",
+                        message=warning.message,
+                        metadata=warning.to_dict()
+                    )
         
         # Additional note-specific validations
         if "text" in note_data:
             text_errors, text_warnings = self._validate_note_text(note_data["text"])
             errors.extend(text_errors)
             warnings.extend(text_warnings)
+            
+            # Log errors and warnings
+            for error in text_errors:
+                self.logger.log_event(
+                    event_type="validation_error",
+                    component="data_validator",
+                    message=error.message,
+                    metadata=error.to_dict()
+                )
+            for warning in text_warnings:
+                self.logger.log_event(
+                    event_type="validation_warning",
+                    component="data_validator",
+                    message=warning.message,
+                    metadata=warning.to_dict()
+                )
         
         # Calculate data quality score
         quality_score = self._calculate_quality_score(errors, warnings)
